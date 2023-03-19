@@ -156,7 +156,7 @@ function Write-Menu {
     }
 
     # Check if host is console
-    if ($host.Name -ne 'ConsoleHost') {
+    if ($host.Name -ne 'ConsoleHost' -and $host.name -ne 'Visual Studio Code Host') {
         Write-Error "[$($host.Name)] Cannot run inside current host, please use a console window instead!"
         return
     }
@@ -164,7 +164,7 @@ function Write-Menu {
     <#
         Set-Color
     #>
-
+    
     function Set-Color ([switch]$Inverted) {
         switch ($Inverted) {
             $true {
@@ -177,7 +177,7 @@ function Write-Menu {
             }
         }
     }
-
+  
     <#
         Get-Menu
     #>
@@ -259,7 +259,7 @@ function Write-Menu {
             }
             Default {
                 Write-Error "Type `"$($inputEntries.GetType().Name)`" not supported, please use an array or hashtable."
-                exit
+                break
             }
         }
 
@@ -365,7 +365,7 @@ function Write-Menu {
         # Restore colours if selected
         if ($lineHighlight) { Set-Color }
         # Entry suffix
-        [System.Console]::Write($cfgSuffix + "`n")
+        [System.Console]::Write("" + $cfgSuffix + "`n")
     }
 
     <#
@@ -433,9 +433,22 @@ function Write-Menu {
         [System.Console]::CursorTop = $lineTop
         [System.Console]::Write("`r")
 
-        # Get pressed key
-        $menuInput = [System.Console]::ReadKey($false)
+        # # Get pressed key
+        # $menuInput = [System.Console]::ReadKey($false)
+        # Get current cursor position
+        $originalX = [System.Console]::CursorLeft
+        $originalY = [System.Console]::CursorTop
 
+        # Hide input while detecting keypresses
+        try {
+            [System.Console]::SetCursorPosition($originalX, $originalY)
+            $menuInput = [System.Console]::ReadKey($false)
+            # Overwrite the key with a space character
+            [System.Console]::Write(" ")
+        } finally {
+            # Move cursor back to original position
+            [System.Console]::SetCursorPosition($originalX, $originalY)
+        }
         # Define selected entry
         $entrySelected = $menuEntries[($pageEntryFirst + $lineSelected)]
 
